@@ -136,6 +136,43 @@ button:hover {
   display: none;
 }
 
+.participants-list {
+  margin: 10px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.participant-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 10px;
+  margin: 5px 0;
+  background-color: #f0f0f0;
+  border-radius: 3px;
+  border: 1px solid #ddd;
+}
+
+.participant-email {
+  font-size: 14px;
+  color: #333;
+}
+
+.cancel-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancel-btn:hover {
+  background-color: #c82333;
+}
+
 footer {
   text-align: center;
   margin-top: 30px;
