@@ -1,3 +1,13 @@
+// Function to escape HTML characters to prevent XSS
+function escapeHtml(unsafe) {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 // Function to fetch activities from API
 async function fetchActivities() {
   const activitiesList = document.getElementById("activities-list");
@@ -28,8 +38,8 @@ async function fetchActivities() {
           <ul class="participants-list">
             ${details.participants.map(email => `
               <li class="participant-item">
-                <span class="participant-email">${email}</span>
-                <button class="cancel-btn" onclick="cancelRegistration('${name}', '${email}')">取消注册</button>
+                <span class="participant-email">${escapeHtml(email)}</span>
+                <button class="cancel-btn" data-activity="${escapeHtml(name)}" data-email="${escapeHtml(email)}">取消注册</button>
               </li>
             `).join('')}
           </ul>
@@ -37,14 +47,23 @@ async function fetchActivities() {
       }
 
       activityCard.innerHTML = `
-        <h4>${name}</h4>
-        <p>${details.description}</p>
-        <p><strong>Schedule:</strong> ${details.schedule}</p>
+        <h4>${escapeHtml(name)}</h4>
+        <p>${escapeHtml(details.description)}</p>
+        <p><strong>Schedule:</strong> ${escapeHtml(details.schedule)}</p>
         <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
         ${participantsList}
       `;
 
       activitiesList.appendChild(activityCard);
+
+      // Add event listeners to cancel buttons
+      activityCard.querySelectorAll('.cancel-btn').forEach(button => {
+        button.addEventListener('click', () => {
+          const activityName = button.getAttribute('data-activity');
+          const email = button.getAttribute('data-email');
+          cancelRegistration(activityName, email);
+        });
+      });
 
       // Add option to select dropdown
       const option = document.createElement("option");
@@ -112,38 +131,21 @@ document.addEventListener("DOMContentLoaded", () => {
 // Function to cancel registration
 async function cancelRegistration(activityName, email) {
   const messageDiv = document.getElementById("message");
-  
   try {
     const response = await fetch(
       `/activities/${encodeURIComponent(activityName)}/cancel?email=${encodeURIComponent(email)}`,
-      {
-        method: "DELETE",
-      }
+      { method: "DELETE" }
     );
-
     const result = await response.json();
-
-    if (response.ok) {
-      messageDiv.textContent = result.message;
-      messageDiv.className = "success";
-      
-      // Refresh the activities display
-      await fetchActivities();
-    } else {
-      messageDiv.textContent = result.detail || "An error occurred";
-      messageDiv.className = "error";
-    }
-
+    messageDiv.textContent = response.ok ? result.message : (result.detail || "An error occurred");
+    messageDiv.className = response.ok ? "success" : "error";
     messageDiv.classList.remove("hidden");
-
-    // Hide message after 5 seconds
-    setTimeout(() => {
-      messageDiv.classList.add("hidden");
-    }, 5000);
+    if (response.ok) await fetchActivities();
   } catch (error) {
     messageDiv.textContent = "Failed to cancel registration. Please try again.";
     messageDiv.className = "error";
     messageDiv.classList.remove("hidden");
     console.error("Error cancelling registration:", error);
   }
+  setTimeout(() => messageDiv.classList.add("hidden"), 5000);
 }
