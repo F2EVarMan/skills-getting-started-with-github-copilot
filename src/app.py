@@ -86,10 +86,29 @@ def signup_for_activity(activity_name: str, email: str):
     # Get the specific activity
     activity = activities[activity_name]
 
-    # 验证学生尚未注册
+    # Verify student is not already registered
     if email in activity["participants"]:
         raise HTTPException(status_code=400, detail="Student already signed up for this activity")
 
     # Add student
     activity["participants"].append(email)
     return {"message": f"Signed up {email} for {activity_name}"}
+
+
+@app.delete("/activities/{activity_name}/cancel")
+def cancel_registration(activity_name: str, email: str):
+    """Cancel a student's registration for an activity"""
+    # Validate activity exists
+    if activity_name not in activities:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    # Get the specific activity
+    activity = activities[activity_name]
+
+    # Verify student is registered
+    if email not in activity["participants"]:
+        raise HTTPException(status_code=400, detail="Student is not registered for this activity")
+
+    # Remove student
+    activity["participants"].remove(email)
+    return {"message": f"Cancelled registration for {email} from {activity_name}"}
